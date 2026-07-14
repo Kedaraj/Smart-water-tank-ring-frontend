@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="theme-color" content="#ffffff"/>
+  <title>AquaSmart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css?v=18"/>
+</head>
+<body>
+
+
+
+<!-- iPhone Frame -->
+<div class="iphone-frame">
+
+
+  <!-- Screen -->
+  <div class="screen" id="screen">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span class="sb-time" id="sb-time">10:39</span>
+      <div class="sb-icons">
+        <!-- Signal bars -->
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="#000">
+          <rect x="0"   y="6" width="3" height="6" rx="0.8" opacity="0.3"/>
+          <rect x="4.5" y="4" width="3" height="8" rx="0.8" opacity="0.5"/>
+          <rect x="9"   y="1.5" width="3" height="10.5" rx="0.8" opacity="0.75"/>
+          <rect x="13.5" y="0" width="3" height="12" rx="0.8"/>
+        </svg>
+        <!-- WiFi -->
+        <svg width="16" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round">
+          <path d="M5 12.55a11 11 0 0114.08 0"/>
+          <path d="M8.53 16.11a6 6 0 016.95 0"/>
+          <circle cx="12" cy="20" r="1.3" fill="#000" stroke="none"/>
+        </svg>
+        <!-- Battery -->
+        <div class="battery">
+          <div class="bat-body"><div class="bat-fill"></div></div>
+          <div class="bat-nub"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ ALL PAGES ════════ -->
+    <div class="pages-wrap">
+
+      <!-- ══════════════════════════════════════════
+           SPLASH PAGE
+      ══════════════════════════════════════════ -->
+      <div class="page active" id="p-splash">
+
+        <!-- CSS gradient background (no image bg) -->
+        <div class="sp-bg">
+          <div class="sp-blob sp-b1"></div>
+          <div class="sp-blob sp-b2"></div>
+        </div>
+
+        <!-- Sparkle stars -->
+        <span class="sp-star s1">✦</span>
+        <span class="sp-star s2">✦</span>
+        <span class="sp-star s3">✦</span>
+
+        <!-- Status bar (white) -->
+        <div class="sp-status-bar">
+          <span id="sp-time">10:56</span>
+          <div class="sp-sb-icons">
+            <svg width="15" height="11" viewBox="0 0 17 12" fill="white"><rect x="0" y="6" width="3" height="6" rx="0.8" opacity="0.5"/><rect x="4.5" y="4" width="3" height="8" rx="0.8" opacity="0.7"/><rect x="9" y="1.5" width="3" height="10.5" rx="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="0.8"/></svg>
+            <svg width="14" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1.2" fill="white" stroke="none"/></svg>
+            <div class="sp-battery"><div class="sp-bat-b"><div class="sp-bat-f"></div></div><div class="sp-bat-n"></div></div>
+          </div>
+        </div>
+
+        <!-- Headline top-left -->
+        <div class="sp-headline">
+          <h1>Smart Tank<br/>Monitor</h1>
+        </div>
+
+        <!-- ── TANK IMAGE (centered hero, not background) ── -->
+        <div class="sp-tank-wrap">
+          <!-- Techcraft PNG — background removed, fully transparent -->
+          <img src="Techcraft_nobg.png" alt="Water Tank" class="sp-tank-img" draggable="false"/>
+
+        </div>
+
+        <!-- Floating stat pills -->
+        <div class="sp-float-pill sp-fp-left"><span>🌡️</span> 28°C</div>
+        <div class="sp-float-pill sp-fp-right"><span>⚡</span> ON</div>
+
+        <!-- Glassmorphism bottom card -->
+        <div class="sp-glass-card">
+
+          <!-- Exact water level -->
+          <div class="sgc-level-row">
+            <div>
+              <p class="sgc-stat">720 <span class="sgc-unit">L</span></p>
+              <p class="sgc-level-sub">of 1,000 L &nbsp;·&nbsp; <strong>72% Full</strong></p>
+            </div>
+            <div class="sgc-ring-wrap">
+              <!-- Mini circular progress -->
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"/>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="#A8E63A" stroke-width="5"
+                  stroke-dasharray="138.2" stroke-dashoffset="38.7"
+                  stroke-linecap="round" transform="rotate(-90 28 28)"/>
+                <text x="28" y="33" text-anchor="middle" fill="white" font-size="11" font-weight="800" font-family="Inter">72%</text>
+              </svg>
+            </div>
+          </div>
+
+          <div class="sgc-pills">
+            <div class="sgc-pill">💧 1000L Tank</div>
+            <div class="sgc-pill"><span class="sp-green-dot"></span> ESP32 Online</div>
+          </div>
+          <button class="sp-cta-btn" onclick="goTo('login')">Get started
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+      </div><!-- /p-splash -->
+
+
+      <!-- ══════════════════════════════════════════
+           LOGIN PAGE
+      ══════════════════════════════════════════ -->
+      <div class="page" id="p-login">
+        <div class="pscroll">
+
+          <!-- Back button -->
+          <button class="lg-back" onclick="goTo('splash')">
+            <svg width="10" height="18" viewBox="0 0 10 18" fill="none" stroke="#1c1c1e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1L1 9l8 8"/></svg>
+          </button>
+
+          <!-- Logo + welcome -->
+          <div class="lg-hero">
+            <div class="lg-logo-wrap">
+              <div class="lg-logo-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C12 2 4 9 4 15a8 8 0 0016 0C20 9 12 2 12 2z" fill="#007AFF"/>
+                  <path d="M12 9C12 9 8.5 13 8.5 16a3.5 3.5 0 007 0C15.5 13 12 9 12 9z" fill="white" opacity="0.85"/>
+                </svg>
+              </div>
+            </div>
+            <h1 class="lg-title">Welcome back</h1>
+            <p class="lg-sub">Sign in to your AquaSmart account</p>
+          </div>
+
+          <!-- Login form -->
+          <div class="lg-form">
+
+            <!-- Email field -->
+            <div class="lg-field">
+              <label class="lg-label">Email address</label>
+              <div class="lg-input-wrap">
+                <svg class="lg-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 7l10 7 10-7"/></svg>
+                <input class="lg-input" type="email" id="lg-email" placeholder="you@example.com" autocomplete="email"/>
+              </div>
+            </div>
+
+            <!-- Password field -->
+            <div class="lg-field">
+              <label class="lg-label">Password</label>
+              <div class="lg-input-wrap">
+                <svg class="lg-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <input class="lg-input" type="password" id="lg-pass" placeholder="••••••••" autocomplete="current-password"/>
+                <button class="lg-eye" id="lg-eye-btn" onclick="togglePass()" type="button">
+                  <svg id="lg-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Forgot password -->
+            <div class="lg-forgot-row">
+              <button class="lg-forgot" type="button">Forgot password?</button>
+            </div>
+
+            <!-- Error message -->
+            <div class="lg-error-msg" id="lg-error" style="display:none"></div>
+
+            <!-- Sign In button -->
+            <button class="lg-signin-btn" id="lg-signin" onclick="doLogin()" type="button">
+              <span id="lg-btn-text">Sign In</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+
+          </div>
+
+          <!-- Secure badge -->
+          <div class="lg-secure-note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Secured &amp; encrypted connection
+          </div>
+
+        </div>
+      </div><!-- /p-login -->
+
+
+      <!-- ── DASHBOARD ── -->
+      <div class="page" id="p-dashboard">
+        <div class="pscroll">
+
+          <!-- Page header -->
+          <div class="page-hdr">
+            <div>
+              <p class="ph-greeting" id="d-greeting">Good Morning 👋</p>
+              <h2 class="ph-title">Home</h2>
+            </div>
+            <div class="ph-right">
+              <div class="esp-chip">
+                <span class="chip-live"></span> ESP32
+              </div>
+              <div class="ph-av">KH</div>
+            </div>
+          </div>
+
+          <!-- Date strip -->
+          <div class="date-strip">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span id="d-date-str">Monday, 14 July 2025</span>
+          </div>
+
+          <!-- Info strip -->
+          <div class="info-strip">
+            <span class="is-dot"></span>
+            <span>AquaNet_5G connected</span>
+            <div class="is-time" id="is-clock">10:39 AM</div>
+          </div>
+
+          <!-- ─ Level Hero Card ─ -->
+          <div class="card level-card">
+            <div class="lc-top">
+              <div>
+                <p class="card-label">Tank Level</p>
+                <p class="lc-pct" id="d-pct">72%</p>
+                <p class="lc-sub" id="lc-sub">720 of 1,000 Litres</p>
+              </div>
+              <div class="lc-badge">
+                <span class="lc-dot"></span> LIVE
+              </div>
+            </div>
+
+            <!-- Colour progress bar -->
+            <div class="pbar-wrap">
+              <div class="pbar-track">
+                <div class="pbar-fill" id="pbar-fill"></div>
+              </div>
+              <div class="pbar-labels">
+                <span>0%</span>
+                <span id="pbar-mid">72%</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            <!-- Tank + side stats -->
+            <div class="tank-row">
+              <div class="tank-visual">
+                <div class="tv-lid"></div>
+                <div class="tv-body">
+                  <div class="tv-water" id="tv-water">
+                    <div class="tv-wave w1"></div>
+                    <div class="tv-wave w2"></div>
+                  </div>
+                  <div class="tv-label" id="tv-label">72%</div>
+                </div>
+                <div class="tv-pipe"></div>
+              </div>
+              <div class="side-stats">
+                <div class="ss-row">
+                  <span class="ssr-lbl">Height</span>
+                  <span class="ssr-val" id="ssr-h">72 cm</span>
+                </div>
+                <div class="ss-divline"></div>
+                <div class="ss-row">
+                  <span class="ssr-lbl">Temp</span>
+                  <span class="ssr-val c-orange" id="ssr-temp">28°C</span>
+                </div>
+                <div class="ss-divline"></div>
+                <div class="ss-row">
+                  <span class="ssr-lbl">Used Today</span>
+                  <span class="ssr-val c-blue" id="ssr-used">45 L</span>
+                </div>
+                <div class="ss-divline"></div>
+                <div class="ss-row">
+                  <span class="ssr-lbl">Remaining</span>
+                  <span class="ssr-val c-green" id="ssr-remaining">280 L</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─ Today's Water Level Card ─ -->
+          <p class="section-lbl">Today's Water Level</p>
+          <div class="card today-water-card">
+
+            <!-- Date + day -->
+            <div class="twc-header">
+              <div class="twc-date-block">
+                <p class="twc-day" id="twc-day">Monday</p>
+                <p class="twc-date" id="twc-date">14 July 2025</p>
+              </div>
+              <div class="twc-live-badge">
+                <span class="chip-live"></span> Live
+              </div>
+            </div>
+
+            <!-- Water level timeline bars -- clickable to show usage -->
+            <div class="twc-bars" id="twc-bars">
+              <div class="twc-bar-col" onclick="showBarDetail(this,'6am','550 L','35 L used')">
+                <div class="twc-bar-wrap"><div class="twc-bar" style="height:55%"></div></div>
+                <span class="twc-bar-lbl">6am</span>
+              </div>
+              <div class="twc-bar-col" onclick="showBarDetail(this,'9am','700 L','20 L used')">
+                <div class="twc-bar-wrap"><div class="twc-bar" style="height:70%"></div></div>
+                <span class="twc-bar-lbl">9am</span>
+              </div>
+              <div class="twc-bar-col" onclick="showBarDetail(this,'12pm','720 L','15 L used')">
+                <div class="twc-bar-wrap"><div class="twc-bar" style="height:72%"></div></div>
+                <span class="twc-bar-lbl">12pm</span>
+              </div>
+              <div class="twc-bar-col" onclick="showBarDetail(this,'Now','720 L','0 L used')">
+                <div class="twc-bar-wrap"><div class="twc-bar twc-bar-now" style="height:68%"></div></div>
+                <span class="twc-bar-lbl twc-now-lbl">Now</span>
+              </div>
+              <div class="twc-bar-col" onclick="showBarDetail(this,'6pm','—','—')">
+                <div class="twc-bar-wrap"><div class="twc-bar twc-bar-future" style="height:60%"></div></div>
+                <span class="twc-bar-lbl">6pm</span>
+              </div>
+              <div class="twc-bar-col" onclick="showBarDetail(this,'9pm','—','—')">
+                <div class="twc-bar-wrap"><div class="twc-bar twc-bar-future" style="height:55%"></div></div>
+                <span class="twc-bar-lbl">9pm</span>
+              </div>
+            </div>
+
+            <!-- Tap tooltip -->
+            <div class="twc-tooltip" id="twc-tooltip" style="display:none">
+              <p class="twct-time" id="twct-time">6am</p>
+              <p class="twct-val" id="twct-val">550 L</p>
+              <p class="twct-used" id="twct-used">35 L used</p>
+            </div>
+
+            <!-- Summary row -->
+            <div class="twc-summary">
+              <div class="twc-sum-item">
+                <p class="twc-sum-val" id="twc-current">720 L</p>
+                <p class="twc-sum-lbl">Current</p>
+              </div>
+              <div class="twc-sum-div"></div>
+              <div class="twc-sum-item">
+                <p class="twc-sum-val c-orange" id="twc-used">45 L</p>
+                <p class="twc-sum-lbl">Used Today</p>
+              </div>
+              <div class="twc-sum-div"></div>
+              <div class="twc-sum-item">
+                <p class="twc-sum-val c-green" id="twc-remaining">280 L</p>
+                <p class="twc-sum-lbl">Remaining</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="spacer"></div>
+        </div>
+      </div>
+
+      <!-- ── ANALYTICS ── -->
+      <div class="page" id="p-analytics">
+        <div class="pscroll">
+          <div class="page-hdr">
+            <h2 class="ph-title">Analytics</h2>
+          </div>
+
+          <!-- Filter tabs: Today / Week / Month / Date -->
+          <div class="seg-wrap an-seg">
+            <button class="seg active" id="seg-today" onclick="segClick(this,'today')">Today</button>
+            <button class="seg" id="seg-week"  onclick="segClick(this,'week')">Week</button>
+            <button class="seg" id="seg-month" onclick="segClick(this,'month')">Month</button>
+            <button class="seg" id="seg-date"  onclick="segClick(this,'date')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Date
+            </button>
+          </div>
+
+          <!-- Date picker (shown only when Date tab active) -->
+          <div class="an-date-pick" id="an-date-pick" style="display:none">
+            <input type="date" id="an-date-input" class="an-date-input"
+              onchange="segClick(document.getElementById('seg-date'),'date')"/>
+          </div>
+
+          <!-- Period label -->
+          <p class="an-period-lbl" id="an-period-lbl">Today — <span id="an-period-date"></span></p>
+
+          <!-- Main chart card -->
+          <div class="card chart-card">
+            <div class="cc-hdr">
+              <div>
+                <p class="card-label">Water Level History</p>
+                <p class="cc-title" id="chart-lbl">Level (%)</p>
+              </div>
+              <div style="text-align:right">
+                <p class="card-label">Peak</p>
+                <p class="cc-peak" id="chart-peak">89%</p>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="mainChart"></canvas></div>
+          </div>
+
+          <!-- Stats cards: Max / Min / Pump Run / Consumed -->
+          <div class="mini-grid">
+            <div class="mini-card bg-blue-soft">
+              <div class="mc-icon">📈</div>
+              <div class="mc-val c-blue" id="an-max">89%</div>
+              <div class="mc-lbl">Max Level</div>
+            </div>
+            <div class="mini-card bg-indigo-soft">
+              <div class="mc-icon">📉</div>
+              <div class="mc-val c-indigo" id="an-min">58%</div>
+              <div class="mc-lbl">Min Level</div>
+            </div>
+            <div class="mini-card bg-green-soft">
+              <div class="mc-icon">⏱</div>
+              <div class="mc-val c-green" id="an-pump">3.2h</div>
+              <div class="mc-lbl">Pump Run</div>
+            </div>
+            <div class="mini-card bg-amber-soft">
+              <div class="mc-icon">💧</div>
+              <div class="mc-val c-amber" id="an-consumed">145L</div>
+              <div class="mc-lbl">Consumed</div>
+            </div>
+          </div>
+
+          <!-- Consumption bar chart -->
+          <div class="card chart-card">
+            <div class="cc-hdr">
+              <div>
+                <p class="card-label" id="con-lbl">Hourly Usage</p>
+                <p class="cc-title">Water Consumed (Litres)</p>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="conChart"></canvas></div>
+          </div>
+          <div class="spacer"></div>
+        </div>
+      </div>
+
+      <!-- ── NOTIFICATIONS ── -->
+      <div class="page" id="p-notifications">
+        <div class="pscroll">
+          <div class="page-hdr">
+            <div>
+              <h2 class="ph-title">Alerts</h2>
+              <p class="ph-sub" id="notif-count">5 unread</p>
+            </div>
+            <button class="clear-all-btn" onclick="clearAllNotifs()">Clear all</button>
+          </div>
+          <div id="notif-list"></div>
+          <div class="spacer"></div>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="page" id="p-settings">
+        <div class="pscroll">
+          <div class="page-hdr">
+            <h2 class="ph-title">Settings</h2>
+          </div>
+
+          <!-- Profile -->
+          <div class="card profile-card">
+            <div class="pro-avatar">KH</div>
+            <div class="pro-info">
+              <p class="pro-name">Kedar Holikatti</p>
+              <p class="pro-role">System Administrator</p>
+            </div>
+            <span class="pro-badge">Admin</span>
+          </div>
+
+          <!-- Device info -->
+          <p class="section-lbl">Device Info</p>
+          <div class="card pad-0">
+            <div class="list-row nd">
+              <span class="nd-lbl">ESP32 Status</span>
+              <span class="nd-val dot-green">● Online</span>
+            </div>
+            <div class="list-div"></div>
+            <div class="list-row nd">
+              <span class="nd-lbl">Firmware</span>
+              <span class="nd-val">v3.1.0</span>
+            </div>
+            <div class="list-div"></div>
+            <div class="list-row nd">
+              <span class="nd-lbl">Last Sync</span>
+              <span class="nd-val">Just now</span>
+            </div>
+          </div>
+
+          <p class="section-lbl">Configuration</p>
+          <div class="card pad-0">
+            <div class="list-row" onclick="openCfg('wifi')">
+              <div class="lr-left"><div class="lr-icon bg-blue"><span style="font-size:14px">📡</span></div><div><p class="lr-name">WiFi Network</p><p class="lr-desc">AquaNet_5G</p></div></div>
+              <span class="lr-chev">›</span>
+            </div>
+            <div class="list-div"></div>
+            <div class="list-row" onclick="openCfg('telegram')">
+              <div class="lr-left"><div class="lr-icon bg-teal"><span style="font-size:14px">📨</span></div><div><p class="lr-name">Telegram Alerts</p><p class="lr-desc">Connected</p></div></div>
+              <span class="lr-chev">›</span>
+            </div>
+            <div class="list-div"></div>
+            <div class="list-row" onclick="openCfg('tank')">
+              <div class="lr-left"><div class="lr-icon bg-indigo"><span style="font-size:14px">📏</span></div><div><p class="lr-name">Tank Height</p><p class="lr-desc">100 cm</p></div></div>
+              <span class="lr-chev">›</span>
+            </div>
+            <div class="list-div"></div>
+            <div class="list-row" onclick="openCfg('levels')">
+              <div class="lr-left"><div class="lr-icon bg-amber"><span style="font-size:14px">⚖️</span></div><div><p class="lr-name">Level Thresholds</p><p class="lr-desc">Min 20% · Max 90%</p></div></div>
+              <span class="lr-chev">›</span>
+            </div>
+          </div>
+
+          <p class="section-lbl">Preferences</p>
+          <div class="card pad-0">
+            <div class="list-row">
+              <div class="lr-left"><div class="lr-icon bg-red"><span style="font-size:14px">🔔</span></div><div><p class="lr-name">Notifications</p><p class="lr-desc">All alerts</p></div></div>
+              <label class="tog"><input type="checkbox" checked/><span class="tog-t"><span class="tog-k"></span></span></label>
+            </div>
+            <div class="list-div"></div>
+            <div class="list-row">
+              <div class="lr-left"><div class="lr-icon bg-purple"><span style="font-size:14px">🤖</span></div><div><p class="lr-name">Auto Pump</p><p class="lr-desc">Enabled</p></div></div>
+              <label class="tog"><input type="checkbox" checked/><span class="tog-t"><span class="tog-k"></span></span></label>
+            </div>
+          </div>
+
+          <p class="section-lbl">Account</p>
+          <div class="card pad-0">
+            <div class="list-row danger" onclick="doLogout()">
+              <div class="lr-left"><div class="lr-icon bg-red-soft"><span style="font-size:14px">↪️</span></div><p class="lr-name c-red">Sign Out</p></div>
+              <span class="lr-chev c-red">›</span>
+            </div>
+          </div>
+
+          <div class="powered-by">
+            <p class="ver-txt">AquaSmart v2.4.1 · Build 2026.07</p>
+            <p class="powered-txt">Powered by <strong>Techcraft Studio</strong></p>
+          </div>
+          <div class="spacer"></div>
+        </div>
+      </div>
+
+    </div><!-- /pages-wrap -->
+
+    <!-- ════════ PUMP SHEET ════════ -->
+    <div class="sheet-overlay" id="pump-sheet" onclick="sheetBg(event,'pump-sheet')">
+      <div class="sheet">
+        <div class="sheet-pill"></div>
+        <div class="sheet-hdr">
+          <p class="sheet-title">Pump Control</p>
+          <button class="sheet-close" onclick="closeSheet('pump-sheet')">✕</button>
+        </div>
+
+        <!-- Visual status -->
+        <div class="pump-hero">
+          <div class="pump-ring" id="pump-ring">
+            <div class="pump-icon-wrap">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M6.343 6.343a8 8 0 000 11.314"/><path d="M17.657 6.343a8 8 0 010 11.314"/><path d="M3.515 3.515a13 13 0 000 16.97"/><path d="M20.485 3.515a13 13 0 010 16.97"/></svg>
+            </div>
+          </div>
+          <p class="pump-status-txt" id="pump-lbl">Pump is ON</p>
+          <p class="pump-runtime" id="pump-sub">Running for 45 min 12 sec</p>
+        </div>
+
+        <!-- Toggle -->
+        <div class="pump-tog-row">
+          <span class="ptr-l">Power</span>
+          <label class="tog lg-tog">
+            <input type="checkbox" id="pump-tog" checked onchange="togglePump()"/>
+            <span class="tog-t"><span class="tog-k"></span></span>
+          </label>
+        </div>
+
+        <!-- Mode -->
+        <div class="seg-wrap" style="margin-bottom:20px">
+          <button class="seg active" id="pm-manual" onclick="pumpMode('manual',this)">Manual</button>
+          <button class="seg" id="pm-auto" onclick="pumpMode('auto',this)">Automatic</button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="pump-stats">
+          <div class="ps-col">
+            <p class="ps-val">08:42 AM</p>
+            <p class="ps-lbl">Last Start</p>
+          </div>
+          <div class="ps-div"></div>
+          <div class="ps-col">
+            <p class="ps-val" id="run-timer">00:45:12</p>
+            <p class="ps-lbl">Runtime</p>
+          </div>
+          <div class="ps-div"></div>
+          <div class="ps-col">
+            <p class="ps-val">1.2 kWh</p>
+            <p class="ps-lbl">Power</p>
+          </div>
+        </div>
+
+        <button class="btn-outline" onclick="closeSheet('pump-sheet')">Done</button>
+      </div>
+    </div>
+
+    <!-- ════════ CONFIG SHEET ════════ -->
+    <div class="sheet-overlay" id="cfg-sheet" onclick="sheetBg(event,'cfg-sheet')">
+      <div class="sheet">
+        <div class="sheet-pill"></div>
+        <div class="sheet-hdr">
+          <p class="sheet-title" id="cfg-title">WiFi Setup</p>
+          <button class="sheet-close" onclick="closeSheet('cfg-sheet')">✕</button>
+        </div>
+        <div id="cfg-body"></div>
+        <button class="btn-primary" onclick="saveCfg()">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- ════════ TAB BAR ════════ -->
+    <div class="tab-bar" id="tab-bar" style="display:none">
+      <button class="tab active" id="tab-dashboard"     onclick="goTo('dashboard')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="tab" id="tab-analytics"           onclick="goTo('analytics')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Analytics</span>
+      </button>
+      <!-- FAB -->
+      <button class="tab-fab" onclick="openSheet('pump-sheet')">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M6.343 6.343a8 8 0 000 11.314"/><path d="M17.657 6.343a8 8 0 010 11.314"/></svg>
+      </button>
+      <button class="tab" id="tab-notifications"       onclick="goTo('notifications')">
+        <div style="position:relative;display:inline-flex">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="tab-badge" id="tab-badge">5</span>
+        </div>
+        <span>Alerts</span>
+      </button>
+      <button class="tab" id="tab-settings"            onclick="goTo('settings')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </div>
+
+    <!-- Home indicator -->
+    <div class="home-bar"></div>
+
+  </div><!-- /screen -->
+</div><!-- /iphone-frame -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js?v=18"></script>
+</body>
+</html>

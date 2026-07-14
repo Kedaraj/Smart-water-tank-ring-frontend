@@ -1,0 +1,20 @@
+{
+  "name": "AquaSmart — Water Tank Monitor",
+  "short_name": "AquaSmart",
+  "description": "Smart Water Tank Monitoring System with real-time data, pump control, and alerts.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1E3A34",
+  "theme_color": "#1E3A34",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='48' fill='%231E3A34'/><path d='M96 30c0 0-42 37-42 74a42 42 0 0084 0c0-37-42-74-42-74z' fill='%23A8E63A'/><path d='M96 80c0 0-20 16.5-20 33a20 20 0 0040 0c0-16.5-20-33-20-33z' fill='rgba(255,255,255,0.6)'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "en-US"
+}
