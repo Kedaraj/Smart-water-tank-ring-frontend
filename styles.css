@@ -53,14 +53,25 @@
   --ease2: cubic-bezier(0.25,0.46,0.45,0.94);
 }
 
-/* ── Reset ──────────────────────────────────────────────── */
+/* ── Reset ────────────────────────────────────────────────────── */
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-html, body { width:100%; height:100%; overflow:hidden; }
+html {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;   /* dynamic viewport — handles mobile browser chrome */
+  overflow: hidden;
+}
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 
 body {
   font-family: var(--font);
   min-height: 100vh;
-  background: var(--bg);   /* original iOS grouped background */
+  min-height: 100dvh;
+  background: var(--bg);
 }
 
 /* ── Desktop bg — hidden in full-screen mode ────────────── */
@@ -73,7 +84,9 @@ body {
   position: fixed;
   inset: 0;
   width: 100vw;
+  width: 100dvw;
   height: 100vh;
+  height: 100dvh;   /* fills true screen including under browser chrome */
   border-radius: 0;
   background: none;
   box-shadow: none;
@@ -87,10 +100,13 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 0;
-  background: var(--bg);   /* original light iOS background */
+  background: var(--bg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Ensure full height on mobile */
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 /* ── Dynamic Island — hidden in full-screen mode ─────────── */
@@ -283,18 +299,13 @@ body {
 @keyframes spstar { 0%{opacity:0.3;transform:scale(0.8) rotate(-12deg);} 100%{opacity:1;transform:scale(1.3) rotate(12deg);} }
 
 /* Status bar (white text on green) */
-.sp-status-bar {
-  position:absolute; top:0; left:0; right:0;
-  height:54px; z-index:100;
-  display:flex; align-items:flex-end; justify-content:space-between;
-  padding:0 26px 9px;
-  font-size:15px; font-weight:600; color:white; pointer-events:none;
-}
-.sp-sb-icons { display:flex; align-items:center; gap:6px; }
-.sp-battery  { display:flex; align-items:center; gap:1.5px; }
-.sp-bat-b    { width:22px; height:11px; border:1.5px solid rgba(255,255,255,0.7); border-radius:3px; padding:1.5px; }
-.sp-bat-f    { height:100%; width:72%; background:white; border-radius:2px; }
-.sp-bat-n    { width:2.5px; height:5px; background:rgba(255,255,255,0.7); border-radius:0 1px 1px 0; }
+/* Splash status bar — hidden (real device status bar is shown by OS) */
+.sp-status-bar { display: none !important; }
+.sp-sb-icons   { display: none !important; }
+.sp-battery    { display: none !important; }
+.sp-bat-b      { display: none !important; }
+.sp-bat-f      { display: none !important; }
+.sp-bat-n      { display: none !important; }
 
 /* Top nav */
 .sp-nav {
