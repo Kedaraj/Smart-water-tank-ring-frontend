@@ -7,6 +7,6 @@ const BACKEND_URL = (() => {
       window.location.hostname === '127.0.0.1') {
     return 'http://localhost:4000';
   }
-  // Production — update this with your Render backend URL
-  return 'https://aquasmart-api.onrender.com';
+  // Production — Render backend
+  return 'https://aqua-smart-api-z4e3.onrender.com';
 })();
