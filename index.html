@@ -3,11 +3,24 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <!-- PWA Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="AquaSmart"/>
   <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="application-name" content="AquaSmart"/>
   <meta name="theme-color" content="#f2f2f7"/>
-  <title>AquaSmart</title>
+  <meta name="description" content="Smart Water Tank Monitoring — real-time level, pump control, usage analytics"/>
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json"/>
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png"/>
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png"/>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -653,6 +666,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="config.js"></script>
-<script src="app.js?v=21"></script>
+<script src="app.js?v=22"></script>
+<script>
+  /* Register Service Worker for PWA */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(r => console.log('✅ SW registered:', r.scope))
+        .catch(e => console.warn('SW registration failed:', e));
+    });
+  }
+</script>
 </body>
 </html>
