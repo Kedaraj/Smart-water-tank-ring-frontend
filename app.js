@@ -722,7 +722,7 @@ console.log('%cAquaSmart 💧', 'color:#007AFF;font-size:14px;font-weight:800;ba
    BACKEND API — real fetch calls to Express server
    ═══════════════════════════════════════════════════════════ */
 
-const API = 'http://localhost:4000/api';
+const API = window.location.origin + '/api';
 
 // ── Token helpers ─────────────────────────────────────────────
 function getToken()       { return localStorage.getItem('aqToken'); }
