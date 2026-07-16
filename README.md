@@ -3,6 +3,7 @@
 <div align="center">
 
 ![ESP32](https://img.shields.io/badge/ESP32-IoT-blue?style=for-the-badge\&logo=espressif)
+![ESP32](https://img.shields.io/badge/ESP32-IoT-blue?style=for-the-badge\&logo=espressif)
 ![Arduino](https://img.shields.io/badge/Arduino-C++-00979D?style=for-the-badge\&logo=arduino)
 ![HTML](https://img.shields.io/badge/HTML5-Web-E34F26?style=for-the-badge\&logo=html5)
 ![CSS](https://img.shields.io/badge/CSS3-Styling-1572B6?style=for-the-badge\&logo=css3)
