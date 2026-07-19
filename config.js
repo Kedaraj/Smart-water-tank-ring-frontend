@@ -1,5 +1,5 @@
 /* AquaSmart — Config
-   Set your Firebase and Backend URLs here */
+   Firebase + Backend API settings */
 
 // ── Backend API (Render) ────────────────────────────────────
 const BACKEND_URL = (() => {
@@ -11,20 +11,16 @@ const BACKEND_URL = (() => {
 })();
 
 // ── Firebase Realtime Database ──────────────────────────────
-// Get these from: Firebase Console → Project Settings → Your Apps
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",                              // ← paste here
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  databaseURL:       "https://YOUR_PROJECT-default-rtdb.firebaseio.com",  // ← paste here
-  projectId:         "YOUR_PROJECT",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyAgloMGXGKaVQmg76crcuV4JN54e9TN4fw",
+  authDomain:        "aquasmart-70.firebaseapp.com",
+  databaseURL:       "https://aquasmart-70-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "aquasmart-70",
+  storageBucket:     "aquasmart-70.firebasestorage.app",
+  messagingSenderId: "48236093653",
+  appId:             "1:48236093653:web:fd0cca33f32046d2ec825c",
+  measurementId:     "G-DTKHPGC70X"
 };
 
-// Firebase database secret (for ESP32 auth — keep private!)
-// Set Rules to: { "rules": { ".read": true, ".write": true } } for testing
-const FIREBASE_DB_URL = FIREBASE_CONFIG.databaseURL;
-
-// Set to true once Firebase is configured
-const USE_FIREBASE = false;  // ← change to true after setting up Firebase
+// ✅ Firebase is now ENABLED — real-time live updates active
+const USE_FIREBASE = true;

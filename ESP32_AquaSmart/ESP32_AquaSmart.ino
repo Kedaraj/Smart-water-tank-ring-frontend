@@ -45,8 +45,8 @@ const char* WIFI_PASSWORD = "YourWiFiPassword";
 
 // Firebase Realtime Database
 // Get from: Firebase Console → Project Settings → Your Apps
-const char* FIREBASE_HOST   = "your-project-default-rtdb.firebaseio.com";
-const char* FIREBASE_SECRET = "your-database-secret-key";  // Database → Rules → Legacy secret
+const char* FIREBASE_HOST   = "aquasmart-70-default-rtdb.asia-southeast1.firebasedatabase.app";
+const char* FIREBASE_SECRET = "AIzaSyAgloMGXGKaVQmg76crcuV4JN54e9TN4fw";  // Web API key
 
 // Tank dimensions
 const float TANK_HEIGHT_CM   = 150.0;   // cm — measure inside tank top to bottom
