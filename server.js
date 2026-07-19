@@ -151,6 +151,7 @@ app.patch('/api/tank/status', requireAuth, (req, res) => {
   const body = req.body || {};
   if (body.level_pct    !== undefined) db.tank.level_pct    = +body.level_pct;
   if (body.level_liters !== undefined) db.tank.level_liters = +body.level_liters;
+  if (body.capacity     !== undefined) db.tank.capacity     = +body.capacity;
   if (body.temp_c       !== undefined) db.tank.temp_c       = +body.temp_c;
   if (body.pump_on      !== undefined) db.tank.pump_on      = !!body.pump_on;
   if (body.pump_mode    !== undefined) db.tank.pump_mode    = body.pump_mode;
