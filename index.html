@@ -25,6 +25,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="styles.css?v=22"/>
+  <!-- Firebase SDK (compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -666,16 +669,83 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="config.js"></script>
-<script src="app.js?v=22"></script>
+<script src="app.js?v=23"></script>
 <script>
-  /* Register Service Worker for PWA */
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(r => console.log('✅ SW registered:', r.scope))
-        .catch(e => console.warn('SW registration failed:', e));
-    });
+/* ── Firebase Real-time Listener ─────────────────────────── */
+window.addEventListener('load', () => {
+  if (typeof USE_FIREBASE !== 'undefined' && USE_FIREBASE && typeof FIREBASE_CONFIG !== 'undefined') {
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      const db = firebase.database();
+
+      // Listen to tank data in real-time
+      db.ref('/aquasmart/tank').on('value', snap => {
+        const t = snap.val();
+        if (!t) return;
+        // Update all display elements live
+        const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+        const lvl = Math.round(t.level_pct || 0);
+        const lit  = Math.round(t.level_liters || 0);
+        const cap  = Math.round(t.capacity || 1000);
+        const rem  = cap - lit;
+        set('d-pct',        lvl + '%');
+        set('lc-sub',       lit + ' of ' + cap + ' Litres');
+        set('pbar-mid',     lvl + '%');
+        set('tv-label',     lvl + '%');
+        set('ssr-remaining', rem + ' L');
+        set('twc-remaining', rem + ' L');
+        const pbar = document.getElementById('pbar-fill');
+        if (pbar) pbar.style.width = lvl + '%';
+        const water = document.getElementById('tv-water');
+        if (water) water.style.height = lvl + '%';
+        if (window.S) window.S.level = lvl;
+        console.log('🔥 Firebase live update:', lvl + '%', lit + 'L');
+      });
+
+      // Listen to pump state
+      db.ref('/aquasmart/pump').on('value', snap => {
+        const p = snap.val();
+        if (!p) return;
+        if (window.S) window.S.pumpOn = p.on;
+        const btn = document.getElementById('pump-btn');
+        if (btn) {
+          btn.classList.toggle('on', !!p.on);
+          const lbl = document.getElementById('pump-status-lbl');
+          if (lbl) lbl.textContent = p.on ? 'Running' : 'Standby';
+        }
+      });
+
+      // Listen to alerts (tank full)
+      db.ref('/aquasmart/alerts').on('value', snap => {
+        const a = snap.val();
+        if (!a) return;
+        if (a.tank_full) {
+          // Show full alert toast
+          if (window.showToast) window.showToast('🚨 Tank Full! Pump auto-stopped.');
+        }
+      });
+
+      // Pump control via Firebase (app → ESP32)
+      window.firebasePumpControl = (on) => {
+        db.ref('/aquasmart/pump').update({ command: on ? 'on' : 'off' });
+        console.log('📱 Pump command sent to Firebase:', on ? 'ON' : 'OFF');
+      };
+
+      console.log('🔥 Firebase connected — real-time updates active!');
+    } catch(e) {
+      console.warn('Firebase init failed:', e.message);
+    }
+  } else {
+    console.log('ℹ️ Firebase disabled — using REST polling. Set USE_FIREBASE=true in config.js');
   }
+
+  /* Register Service Worker */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(r => console.log('✅ SW registered:', r.scope))
+      .catch(e => console.warn('SW failed:', e));
+  }
+});
 </script>
 </body>
 </html>
