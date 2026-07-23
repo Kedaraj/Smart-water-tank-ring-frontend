@@ -213,30 +213,60 @@ function swipe() {
 
 /* ── Dashboard ──────────────────────────────────────────── */
 function initDash() {
-  // Load real data immediately
-  loadTankData();
-  loadTodayLogs();
-
-  // Apply level to visuals after data loads
-  setTimeout(() => {
-    const pbar  = document.getElementById('pbar-fill');
-    if (pbar)  pbar.style.width  = S.level + '%';
-    const water = document.getElementById('tv-water');
-    if (water) water.style.height = S.level + '%';
-    const tvlbl = document.getElementById('tv-label');
-    if (tvlbl) tvlbl.textContent  = Math.round(S.level) + '%';
-  }, 300);
-
-  // ⚡ Real polling every 10 seconds (fallback when Firebase not active)
-  //    Firebase real-time listener overrides this when USE_FIREBASE=true
   clearInterval(S.timers.sim);
-  S.timers.sim = setInterval(() => {
+
+  if (typeof USE_FIREBASE !== 'undefined' && USE_FIREBASE) {
+    // ── Firebase mode: real-time from ESP32 ──────────────────
+    // Firebase listener in index.html calls updateDashboard() live
+    // No polling needed — stop here
+    console.log('🔥 Dashboard: Firebase real-time mode');
+  } else {
+    // ── REST API mode: poll every 10s ────────────────────
     loadTankData();
     loadTodayLogs();
-  }, 10000);
+    S.timers.sim = setInterval(() => {
+      loadTankData();
+      loadTodayLogs();
+    }, 10000);
+    console.log('ℹ️ Dashboard: REST polling mode (10s)');
+  }
 
   startPumpTimer();
 }
+
+/* ── Single function that updates ALL dashboard visuals ── */
+/* Called by both Firebase listener AND loadTankData()   */
+function updateDashboard(levelPct, levelL, capacity, extra) {
+  extra = extra || {};
+  const remaining = Math.max(0, capacity - levelL);
+  S.level = levelPct;
+
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  // Text values
+  set('d-pct',         levelPct + '%');
+  set('lc-sub',        levelL + ' of ' + capacity + ' Litres');
+  set('pbar-mid',      levelPct + '%');
+  set('tv-label',      levelPct + '%');
+  set('ssr-remaining', remaining + ' L');
+  set('twc-current',   levelL + ' L');
+  set('twc-remaining', remaining + ' L');
+  if (extra.temp_c)   set('ssr-temp', extra.temp_c + '°C');
+  if (extra.distance) set('ssr-h',    Math.round(extra.distance) + ' cm');
+
+  // Water fill visuals
+  const pbar  = document.getElementById('pbar-fill');
+  if (pbar)  pbar.style.width  = levelPct + '%';
+  const water = document.getElementById('tv-water');
+  if (water) water.style.height = levelPct + '%';
+
+  // Splash glass card
+  const sstat = document.querySelector('.sgc-stat');
+  if (sstat) sstat.innerHTML = levelL + ' <span class="sgc-unit">L</span>';
+
+  console.log('✅ Dashboard updated:', levelPct + '%', levelL + 'L / ' + capacity + 'L');
+}
+
 
 /* ── Pump Sheet ──────────────────────────────────────────── */
 function openSheet(id) {
@@ -697,18 +727,8 @@ async function loadTankData() {
     // distance from sensor (sent by ESP32)
     if (t.distance) set('ssr-h', Math.round(t.distance) + ' cm');
 
-    // ── Update water visuals ──
-    const pbar = document.getElementById('pbar-fill');
-    if (pbar) pbar.style.width = levelPct + '%';
-    const water = document.getElementById('tv-water');
-    if (water) water.style.height = levelPct + '%';
-    const tvlbl = document.getElementById('tv-label');
-    if (tvlbl) tvlbl.textContent = levelPct + '%';
-    // Splash glass card
-    const sstat = document.querySelector('.sgc-stat');
-    if (sstat) sstat.innerHTML = levelL + ' <span class="sgc-unit">L</span>';
-
-    console.log('✅ Tank:', levelPct + '%', levelL + 'L of ' + capacity + 'L');
+    // Use shared updateDashboard function
+    updateDashboard(levelPct, levelL, capacity, { temp_c: t.temp_c, distance: t.distance });
   } catch(e) { console.warn('Tank data fetch failed:', e.message); }
 }
 
