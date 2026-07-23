@@ -678,60 +678,62 @@ window.addEventListener('load', () => {
       firebase.initializeApp(FIREBASE_CONFIG);
       const db = firebase.database();
 
-      // Listen to tank data in real-time
-      db.ref('/aquasmart/tank').on('value', snap => {
+      // ── Listen to tank status (ESP32 sends here) ────────
+      db.ref('/aquasmart/status').on('value', snap => {
         const t = snap.val();
         if (!t) return;
-        // Update all display elements live
         const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
-        const lvl = Math.round(t.level_pct || 0);
+        const lvl = Math.round(t.level_pct  || 0);
         const lit  = Math.round(t.level_liters || 0);
-        const cap  = Math.round(t.capacity || 1000);
-        const rem  = cap - lit;
-        set('d-pct',        lvl + '%');
-        set('lc-sub',       lit + ' of ' + cap + ' Litres');
-        set('pbar-mid',     lvl + '%');
-        set('tv-label',     lvl + '%');
+        const cap  = Math.round(t.capacity   || 50);
+        const rem  = Math.max(0, cap - lit);
+        set('d-pct',         lvl + '%');
+        set('lc-sub',        lit + ' of ' + cap + ' Litres');
+        set('pbar-mid',      lvl + '%');
+        set('tv-label',      lvl + '%');
         set('ssr-remaining', rem + ' L');
         set('twc-remaining', rem + ' L');
-        const pbar = document.getElementById('pbar-fill');
-        if (pbar) pbar.style.width = lvl + '%';
+        set('ssr-h',         t.distance ? Math.round(t.distance) + ' cm' : '—');
+        const pbar  = document.getElementById('pbar-fill');
+        if (pbar)  pbar.style.width  = lvl + '%';
         const water = document.getElementById('tv-water');
         if (water) water.style.height = lvl + '%';
         if (window.S) window.S.level = lvl;
-        console.log('🔥 Firebase live update:', lvl + '%', lit + 'L');
-      });
 
-      // Listen to pump state
-      db.ref('/aquasmart/pump').on('value', snap => {
-        const p = snap.val();
-        if (!p) return;
-        if (window.S) window.S.pumpOn = p.on;
-        const btn = document.getElementById('pump-btn');
-        if (btn) {
-          btn.classList.toggle('on', !!p.on);
+        // Update pump state from status
+        if (t.pump !== undefined) {
+          if (window.S) window.S.pumpOn = t.pump;
+          const btn = document.getElementById('pump-btn');
+          if (btn) btn.classList.toggle('on', !!t.pump);
           const lbl = document.getElementById('pump-status-lbl');
-          if (lbl) lbl.textContent = p.on ? 'Running' : 'Standby';
+          if (lbl) lbl.textContent = t.pump ? 'Running' : 'Standby';
         }
+
+        // Tank full alert from status
+        if (t.tank_full) {
+          if (window.showToast) window.showToast('🚨 Tank Full! Pump auto-stopped.');
+        }
+
+        console.log('🔥 Firebase:', lvl + '%', lit + 'L', '| Pump:', t.pump ? 'ON' : 'OFF');
       });
 
-      // Listen to alerts (tank full)
+      // ── Listen to alerts ─────────────────────────────────
       db.ref('/aquasmart/alerts').on('value', snap => {
         const a = snap.val();
         if (!a) return;
         if (a.tank_full) {
-          // Show full alert toast
           if (window.showToast) window.showToast('🚨 Tank Full! Pump auto-stopped.');
         }
       });
 
-      // Pump control via Firebase (app → ESP32)
+      // ── Pump control: app → Firebase → ESP32 ─────────────
       window.firebasePumpControl = (on) => {
         db.ref('/aquasmart/pump').update({ command: on ? 'on' : 'off' });
-        console.log('📱 Pump command sent to Firebase:', on ? 'ON' : 'OFF');
+        console.log('📱 Pump command → Firebase:', on ? 'ON' : 'OFF');
       };
 
       console.log('🔥 Firebase connected — real-time updates active!');
+
     } catch(e) {
       console.warn('Firebase init failed:', e.message);
     }

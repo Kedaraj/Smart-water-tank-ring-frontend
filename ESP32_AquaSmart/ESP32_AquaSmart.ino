@@ -1,139 +1,73 @@
-/**
- * ╔══════════════════════════════════════════════════════════╗
- * ║   AquaSmart ESP32 Firmware v2.0 — Firebase Edition       ║
- * ║   SR04M-2 + Relay + Buzzer + Auto Pump Cutoff            ║
- * ╚══════════════════════════════════════════════════════════╝
- *
- * WIRING:
- * ─────────────────────────────────────────────────────────
- *  SR04M-2  VCC   → 5V (Vin)
- *  SR04M-2  GND   → GND
- *  SR04M-2  TRIG  → GPIO 5
- *  SR04M-2  ECHO  → [1kΩ]─GPIO 18─[2kΩ]─GND  (voltage divider!)
- *
- *  Relay    VCC   → 5V
- *  Relay    GND   → GND
- *  Relay    IN    → GPIO 26  (LOW = pump ON for active-low relay)
- *  Relay    COM   → Pump power supply Live
- *  Relay    NO    → Pump Live wire
- *
- *  Buzzer   +     → GPIO 27
- *  Buzzer   -     → GND
- *
- * LIBRARIES (Arduino Library Manager):
- *   ✅ ArduinoJson  (by Benoit Blanchon)
- *   ✅ WiFi, HTTPClient (built-in ESP32)
- *
- * LOGIC:
- *   • Pump OFF → measure every 30 seconds
- *   • Pump ON  → measure every 5 seconds (fast fill monitoring)
- *   • Tank >= FULL_THRESHOLD% → auto shutoff relay + buzzer alert
- *   • Firebase listens for pump commands from the app
- */
+/*
+   AquaSmart ESP32 Water Tank Monitor
+   Board: ESP32 Dev Module
+   Sensor: HC-SR04 Ultrasonic
+   Firebase Realtime Database
+
+   Wiring:
+     HC-SR04 VCC  → 5V (Vin)
+     HC-SR04 GND  → GND
+     HC-SR04 TRIG → GPIO 5
+     HC-SR04 ECHO → [1kΩ]→GPIO 18→[2kΩ]→GND  (voltage divider!)
+     Relay    IN  → GPIO 26  (LOW = pump ON)
+     Buzzer   +   → GPIO 27
+*/
 
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// ═══════════════════════════════════════════════════════════
-//  ⚙️  CONFIGURATION — Edit these values ONLY
-// ═══════════════════════════════════════════════════════════
-
+//=========================
 // WiFi
-const char* WIFI_SSID     = "YourWiFiName";
-const char* WIFI_PASSWORD = "YourWiFiPassword";
+//=========================
+const char* WIFI_SSID     = "Kedraj";
+const char* WIFI_PASSWORD = "KKKKKKKK";
 
-// Firebase Realtime Database
-// Get from: Firebase Console → Project Settings → Your Apps
-const char* FIREBASE_HOST   = "aquasmart-70-default-rtdb.asia-southeast1.firebasedatabase.app";
-const char* FIREBASE_SECRET = "TDYEPUMV87vDVnEZx6020Jfdfc0YBKdZ67dIzpsu";  // Database secret
+//=========================
+// Firebase
+//=========================
+const char* FIREBASE_HOST =
+  "aquasmart-70-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-// Tank dimensions
-const float TANK_HEIGHT_CM   = 30.0;   // cm — inside tank height
-const float TANK_CAPACITY_L  = 50.0;   // litres — total capacity
-const float SENSOR_OFFSET_CM = 5.0;    // cm — gap from sensor to full water level
-const float FULL_THRESHOLD   = 95.0;   // % — above this = FULL, cut pump
+const char* FIREBASE_SECRET =
+  "TDYEPUMV87vDVnEZx6020Jfdfc0YBKdZ67dIzpsu";
 
-// GPIO Pins
-const int TRIG_PIN   = 5;
-const int ECHO_PIN   = 18;
-const int RELAY_PIN  = 26;   // LOW = pump ON (active-low relay)
-const int BUZZER_PIN = 27;
+//=========================
+// Tank Settings
+//=========================
+const float TANK_HEIGHT_CM   = 30.0;   // cm  — inside tank height
+const float TANK_CAPACITY_L  = 50.0;   // L   — total capacity
+const float SENSOR_OFFSET_CM = 5.0;    // cm  — gap from sensor to full water
+const float FULL_THRESHOLD   = 95.0;   // %   — auto-cutoff level
 
-// Update intervals
-const unsigned long PUMP_ON_INTERVAL  = 5000;   // 5 sec when pump running
-const unsigned long PUMP_OFF_INTERVAL = 30000;  // 30 sec when pump idle
+//=========================
+// Pins
+//=========================
+#define TRIG_PIN   5
+#define ECHO_PIN   18
+#define RELAY_PIN  26
+#define BUZZER_PIN 27
 
-// ═══════════════════════════════════════════════════════════
-//  State
-// ═══════════════════════════════════════════════════════════
-bool  pumpState      = false;
-bool  tankFull       = false;
+//=========================
+// Timing
+//=========================
+const unsigned long PUMP_ON_INTERVAL  = 5000;   // 5s  when pump is running
+const unsigned long PUMP_OFF_INTERVAL = 30000;  // 30s when pump is idle
+
+//=========================
+// State
+//=========================
+bool  pumpState   = false;
+bool  tankFull    = false;
 unsigned long lastUpdate = 0;
-unsigned long buzzerStart = 0;
-int   buzzerBeeps    = 0;
-bool  buzzerActive   = false;
 
-// ═══════════════════════════════════════════════════════════
-//  Buzzer — Non-blocking 3-beep pattern
-// ═══════════════════════════════════════════════════════════
-void startBuzzer() {
-  buzzerBeeps  = 0;
-  buzzerActive = true;
-  buzzerStart  = millis();
-  Serial.println("🔔 BUZZER — Tank Full Alert!");
-}
+bool  buzzerActive = false;
+unsigned long buzzerTimer = 0;
+int   buzzerCount  = 0;
 
-void handleBuzzer() {
-  if (!buzzerActive) return;
-
-  unsigned long elapsed = millis() - buzzerStart;
-  int cycle = elapsed / 400; // each beep cycle = 400ms
-  int phase = elapsed % 400;
-
-  if (cycle >= 6) {          // 3 beeps done (ON+OFF × 3)
-    digitalWrite(BUZZER_PIN, LOW);
-    buzzerActive = false;
-    return;
-  }
-
-  // ON for first 200ms, OFF for next 200ms
-  digitalWrite(BUZZER_PIN, (phase < 200) ? HIGH : LOW);
-}
-
-// ═══════════════════════════════════════════════════════════
-//  Relay — Pump control
-// ═══════════════════════════════════════════════════════════
-void setPump(bool on) {
-  pumpState = on;
-  // Active-low relay: LOW = pump ON, HIGH = pump OFF
-  digitalWrite(RELAY_PIN, on ? LOW : HIGH);
-  Serial.printf("🔌 Pump → %s\n", on ? "ON" : "OFF");
-}
-
-// ═══════════════════════════════════════════════════════════
-//  SR04M-2 — Read distance (median of 5)
-// ═══════════════════════════════════════════════════════════
-float readDistanceCM() {
-  float readings[5];
-  for (int i = 0; i < 5; i++) {
-    digitalWrite(TRIG_PIN, LOW);  delayMicroseconds(4);
-    digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-    long dur = pulseIn(ECHO_PIN, HIGH, 30000);
-    readings[i] = (dur == 0) ? 999.0 : (dur * 0.0343f) / 2.0f;
-    delay(30);
-  }
-  // Sort → median
-  for (int i = 0; i < 4; i++)
-    for (int j = i+1; j < 5; j++)
-      if (readings[j] < readings[i]) { float t=readings[i]; readings[i]=readings[j]; readings[j]=t; }
-  return readings[2];
-}
-
-// ═══════════════════════════════════════════════════════════
-//  Calculate level from distance
-// ═══════════════════════════════════════════════════════════
+//=========================
+// Tank Level Structure
+//=========================
 struct Level {
   float pct;
   float liters;
@@ -142,37 +76,90 @@ struct Level {
   bool  valid;
 };
 
+//=========================
+// WiFi Connect
+//=========================
+bool connectWiFi() {
+  if (WiFi.status() == WL_CONNECTED) return true;
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  Serial.print("Connecting WiFi");
+  for (int i = 0; i < 30; i++) {
+    if (WiFi.status() == WL_CONNECTED) break;
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("✅ WiFi OK — IP: ");
+    Serial.println(WiFi.localIP());
+    return true;
+  }
+  Serial.println("❌ WiFi Failed");
+  return false;
+}
+
+//=========================
+// Pump Control (active-low relay)
+//=========================
+void setPump(bool on) {
+  pumpState = on;
+  digitalWrite(RELAY_PIN, on ? LOW : HIGH);
+  Serial.print("🔌 Pump → ");
+  Serial.println(on ? "ON" : "OFF");
+}
+
+//=========================
+// Read HC-SR04 (median of 5)
+//=========================
+float readDistanceCM() {
+  float val[5];
+
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+    val[i] = (duration == 0) ? 999.0f : duration * 0.0343f / 2.0f;
+    delay(40);
+  }
+
+  // Sort → median
+  for (int i = 0; i < 4; i++)
+    for (int j = i + 1; j < 5; j++)
+      if (val[j] < val[i]) { float t = val[i]; val[i] = val[j]; val[j] = t; }
+
+  return val[2];
+}
+
+//=========================
+// Calculate Tank Level
+//=========================
 Level calculateLevel(float dist) {
   Level L;
-  L.distCM  = dist;
-  L.valid   = (dist > 2.0 && dist < 400.0);
-  if (!L.valid) { L.pct = 0; L.liters = 0; L.heightCM = 0; return L; }
+  L.distCM = dist;
 
+  if (dist < 2.0f || dist > 400.0f) {
+    L.valid = false;
+    return L;
+  }
+
+  L.valid    = true;
   L.heightCM = constrain(TANK_HEIGHT_CM - (dist - SENSOR_OFFSET_CM), 0.0f, TANK_HEIGHT_CM);
   L.pct      = constrain((L.heightCM / TANK_HEIGHT_CM) * 100.0f, 0.0f, 100.0f);
   L.liters   = (L.pct / 100.0f) * TANK_CAPACITY_L;
   return L;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  WiFi
-// ═══════════════════════════════════════════════════════════
-bool connectWiFi() {
-  if (WiFi.status() == WL_CONNECTED) return true;
-  Serial.printf("📡 WiFi: %s ", WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  for (int i = 0; i < 30 && WiFi.status() != WL_CONNECTED; i++) {
-    delay(500); Serial.print(".");
-  }
-  bool ok = WiFi.status() == WL_CONNECTED;
-  Serial.println(ok ? "\n✅ WiFi OK" : "\n❌ WiFi FAIL");
-  return ok;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  Firebase — PATCH data to Realtime Database
-// ═══════════════════════════════════════════════════════════
+//=========================
+// Firebase PATCH
+//=========================
 bool firebasePatch(const char* path, const String& json) {
   HTTPClient http;
   String url = String("https://") + FIREBASE_HOST + path + ".json?auth=" + FIREBASE_SECRET;
@@ -184,165 +171,156 @@ bool firebasePatch(const char* path, const String& json) {
   return (code == 200);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Firebase — GET value
-// ═══════════════════════════════════════════════════════════
+//=========================
+// Firebase GET
+//=========================
 String firebaseGet(const char* path) {
   HTTPClient http;
   String url = String("https://") + FIREBASE_HOST + path + ".json?auth=" + FIREBASE_SECRET;
   http.begin(url);
   http.setTimeout(8000);
-  int code = http.GET();
-  String resp = (code == 200) ? http.getString() : "null";
+  int  code     = http.GET();
+  String response = (code == 200) ? http.getString() : "null";
   http.end();
-  return resp;
+  return response;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Send tank data to Firebase
-// ═══════════════════════════════════════════════════════════
+//=========================
+// Buzzer (non-blocking 3 beeps)
+//=========================
+void startBuzzer() {
+  buzzerActive = true;
+  buzzerTimer  = millis();
+  buzzerCount  = 0;
+  Serial.println("🔔 Buzzer — Tank Full!");
+}
+
+void handleBuzzer() {
+  if (!buzzerActive) return;
+  unsigned long elapsed = millis() - buzzerTimer;
+  int cycle = elapsed / 400;
+  int phase = elapsed % 400;
+  if (cycle >= 6) { digitalWrite(BUZZER_PIN, LOW); buzzerActive = false; return; }
+  digitalWrite(BUZZER_PIN, (phase < 200) ? HIGH : LOW);
+}
+
+//=========================
+// Send data to Firebase
+//=========================
 void sendToFirebase(Level& lv) {
-  // Get current timestamp approximation
-  unsigned long t = millis() / 1000;
+  StaticJsonDocument<256> doc;
+  doc["level_pct"]    = round(lv.pct * 10) / 10.0;
+  doc["level_liters"] = round(lv.liters * 10) / 10.0;
+  doc["capacity"]     = (int)TANK_CAPACITY_L;
+  doc["distance"]     = round(lv.distCM * 10) / 10.0;
+  doc["pump"]         = pumpState;
+  doc["tank_full"]    = tankFull;
 
-  // Build tank JSON
-  StaticJsonDocument<256> tank;
-  tank["level_pct"]    = round(lv.pct * 10) / 10.0;
-  tank["level_liters"] = (int)round(lv.liters);
-  tank["capacity"]     = (int)TANK_CAPACITY_L;
-  tank["dist_cm"]      = round(lv.distCM * 10) / 10.0;
-  tank["updated_ms"]   = (unsigned long)millis();
+  String json;
+  serializeJson(doc, json);
 
-  String tankJson;
-  serializeJson(tank, tankJson);
-
-  // Build pump JSON
-  StaticJsonDocument<128> pump;
-  pump["on"]       = pumpState;
-  pump["mode"]     = "auto";
-  pump["tank_full"]= tankFull;
-
-  String pumpJson;
-  serializeJson(pump, pumpJson);
-
-  bool tankOk = firebasePatch("/aquasmart/tank", tankJson);
-  bool pumpOk = firebasePatch("/aquasmart/pump", pumpJson);
-
-  Serial.printf("%s Firebase → %s | Level:%.1f%% (%.0fL) | Pump:%s\n",
-    (tankOk && pumpOk) ? "✅" : "⚠️",
-    (tankOk && pumpOk) ? "OK" : "FAIL",
-    lv.pct, lv.liters, pumpState ? "ON" : "OFF");
+  bool ok = firebasePatch("/aquasmart/status", json);
+  Serial.printf("%s Firebase → Level:%.1f%% (%.1fL) | Dist:%.1fcm | Pump:%s\n",
+    ok ? "✅" : "⚠️", lv.pct, lv.liters, lv.distCM, pumpState ? "ON" : "OFF");
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Check Firebase for pump command from app
-// ═══════════════════════════════════════════════════════════
+//=========================
+// Check pump command from app
+//=========================
 void checkPumpCommand() {
-  String val = firebaseGet("/aquasmart/pump/command");
-  val.trim();
-  if (val == "\"on\"" || val == "true") {
-    if (!pumpState) {
-      Serial.println("📱 App command: Pump ON");
-      setPump(true);
-      // Clear command
-      firebasePatch("/aquasmart/pump", "{\"command\":null}");
-    }
-  } else if (val == "\"off\"" || val == "false") {
-    if (pumpState) {
-      Serial.println("📱 App command: Pump OFF");
-      setPump(false);
-      firebasePatch("/aquasmart/pump", "{\"command\":null}");
-    }
+  String cmd = firebaseGet("/aquasmart/pump/command");
+  cmd.trim();
+
+  if (cmd == "\"on\"") {
+    setPump(true);
+    firebasePatch("/aquasmart/pump", "{\"command\":null}");
+  } else if (cmd == "\"off\"") {
+    setPump(false);
+    firebasePatch("/aquasmart/pump", "{\"command\":null}");
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  SETUP
-// ═══════════════════════════════════════════════════════════
+//=========================
+// SETUP
+//=========================
 void setup() {
   Serial.begin(115200);
   delay(500);
-  Serial.println("\n╔══════════════════════════════════════╗");
-  Serial.println("║  AquaSmart v2.0 — Firebase + Relay   ║");
-  Serial.println("╚══════════════════════════════════════╝\n");
 
-  // Pins
+  Serial.println("\n╔══════════════════════════════════╗");
+  Serial.println("║  AquaSmart ESP32 v2.0            ║");
+  Serial.println("║  HC-SR04 + Relay + Buzzer        ║");
+  Serial.println("╚══════════════════════════════════╝");
+
   pinMode(TRIG_PIN,   OUTPUT);
   pinMode(ECHO_PIN,   INPUT);
   pinMode(RELAY_PIN,  OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
-  // Safe defaults — pump OFF
-  setPump(false);
   digitalWrite(BUZZER_PIN, LOW);
+  setPump(false);   // Pump OFF on boot
 
-  Serial.printf("📐 Tank: %.0fcm tall, %.0fL capacity\n", TANK_HEIGHT_CM, TANK_CAPACITY_L);
-  Serial.printf("🛑 Auto-cutoff at: %.0f%%\n\n", FULL_THRESHOLD);
+  Serial.printf("📐 Tank: %.0fcm | %.0fL | Offset:%.0fcm | Cutoff:%.0f%%\n",
+    TANK_HEIGHT_CM, TANK_CAPACITY_L, SENSOR_OFFSET_CM, FULL_THRESHOLD);
 
-  // Connect WiFi
-  connectWiFi();
+  if (connectWiFi()) {
+    // Boot beep — 1 short beep = ready
+    digitalWrite(BUZZER_PIN, HIGH); delay(200); digitalWrite(BUZZER_PIN, LOW);
+  }
 
-  // Boot beep
-  digitalWrite(BUZZER_PIN, HIGH); delay(200); digitalWrite(BUZZER_PIN, LOW);
-  Serial.println("✅ System ready!\n");
+  Serial.println("✅ System Ready\n");
 }
 
-// ═══════════════════════════════════════════════════════════
-//  LOOP
-// ═══════════════════════════════════════════════════════════
+//=========================
+// LOOP
+//=========================
 void loop() {
-  // Handle buzzer (non-blocking)
   handleBuzzer();
 
-  // Reconnect WiFi if needed
+  // Reconnect WiFi if lost
   if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("⚠️ WiFi lost — reconnecting...");
     connectWiFi();
-    delay(1000);
     return;
   }
 
-  // Decide update interval based on pump state
+  // Decide update interval
   unsigned long interval = pumpState ? PUMP_ON_INTERVAL : PUMP_OFF_INTERVAL;
-  unsigned long now = millis();
 
-  if (now - lastUpdate >= interval || lastUpdate == 0) {
-    lastUpdate = now;
+  if (millis() - lastUpdate >= interval) {
+    lastUpdate = millis();
 
-    // ─── 1. Read sensor ───────────────────────────────────
-    float dist = readDistanceCM();
-    Level lv   = calculateLevel(dist);
+    // 1. Read sensor
+    float dist  = readDistanceCM();
+    Level level = calculateLevel(dist);
 
-    if (!lv.valid) {
-      Serial.printf("⚠️  Sensor error (dist=%.1fcm)\n", dist);
+    if (!level.valid) {
+      Serial.printf("⚠️ Sensor error (dist=%.1fcm) — check wiring\n", dist);
       return;
     }
 
-    Serial.printf("\n📏 Dist: %.1fcm → Level: %.1f%% | %.0fL | Pump: %s\n",
-      dist, lv.pct, lv.liters, pumpState ? "ON" : "OFF");
+    Serial.printf("\n📏 Dist:%.1fcm | Height:%.1fcm | Level:%.1f%% | %.1fL\n",
+      level.distCM, level.heightCM, level.pct, level.liters);
 
-    // ─── 2. FULL CHECK — Auto cutoff ──────────────────────
-    if (lv.pct >= FULL_THRESHOLD && pumpState) {
-      Serial.println("🚨 TANK FULL — Auto-cutting pump!");
+    // 2. Auto pump cutoff when full
+    if (level.pct >= FULL_THRESHOLD && pumpState) {
+      Serial.println("🚨 TANK FULL — Auto cutting pump!");
       setPump(false);
       tankFull = true;
-
-      // Alert buzzer
       startBuzzer();
-
-      // Write alert to Firebase
-      firebasePatch("/aquasmart/alerts", "{\"tank_full\":true,\"buzzer\":true}");
-    } else if (lv.pct < (FULL_THRESHOLD - 5.0f)) {
-      // Reset full flag when drops 5% below threshold (hysteresis)
-      if (tankFull) {
-        tankFull = false;
-        firebasePatch("/aquasmart/alerts", "{\"tank_full\":false,\"buzzer\":false}");
-      }
+      firebasePatch("/aquasmart/alerts", "{\"tank_full\":true}");
     }
 
-    // ─── 3. Send to Firebase ──────────────────────────────
-    sendToFirebase(lv);
+    // 3. Reset full flag when drops 5% below threshold
+    if (level.pct < (FULL_THRESHOLD - 5.0f) && tankFull) {
+      tankFull = false;
+      firebasePatch("/aquasmart/alerts", "{\"tank_full\":false}");
+    }
 
-    // ─── 4. Check for commands from app ───────────────────
+    // 4. Send to Firebase
+    sendToFirebase(level);
+
+    // 5. Check for app commands
     checkPumpCommand();
   }
 
