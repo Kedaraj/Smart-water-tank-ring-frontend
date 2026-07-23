@@ -49,10 +49,10 @@ const char* FIREBASE_HOST   = "aquasmart-70-default-rtdb.asia-southeast1.firebas
 const char* FIREBASE_SECRET = "TDYEPUMV87vDVnEZx6020Jfdfc0YBKdZ67dIzpsu";  // Database secret
 
 // Tank dimensions
-const float TANK_HEIGHT_CM   = 150.0;   // cm — measure inside tank top to bottom
-const float TANK_CAPACITY_L  = 1000.0;  // litres
-const float SENSOR_OFFSET_CM = 10.0;    // cm gap from sensor face to full water level
-const float FULL_THRESHOLD   = 95.0;    // % — above this = FULL, cut pump
+const float TANK_HEIGHT_CM   = 30.0;   // cm — inside tank height
+const float TANK_CAPACITY_L  = 50.0;   // litres — total capacity
+const float SENSOR_OFFSET_CM = 5.0;    // cm — gap from sensor to full water level
+const float FULL_THRESHOLD   = 95.0;   // % — above this = FULL, cut pump
 
 // GPIO Pins
 const int TRIG_PIN   = 5;

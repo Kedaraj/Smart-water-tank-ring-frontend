@@ -47,8 +47,8 @@ if (!db) {
     sessions: [],          // { id, user_id, token_ref, expires_at, revoked }
     tank: {
       level_pct:    72,
-      level_liters: 720,
-      capacity:     1000,
+      level_liters: 36,
+      capacity:     50,
       temp_c:       28,
       pump_on:      false,
       pump_mode:    'manual',
