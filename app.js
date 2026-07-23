@@ -330,276 +330,127 @@ function startPumpTimer() {
 
 /* ── Analytics ──────────────────────────────────────────── */
 
-// Rich data for each period
-const AN_DATA = {
-  today: {
-    periodLabel: 'Today',
-    chartLabel:  'Hourly — ',
-    labels:      ['4am','5am','6am','7am','8am','9am','10am','11am','12pm','1pm','2pm','3pm','Now'],
-    level:       [88,85,83,78,72,68,70,75,72,68,65,67,68],
-    consumed:    [0,3,2,5,6,4,0,0,3,4,3,0,0],
-    pumpRun:     '1.8h',
-    conLabel:    'Hourly Usage (Litres)',
-  },
-  week: {
-    periodLabel: 'This Week',
-    chartLabel:  'Daily — ',
-    labels:      ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-    level:       [72,80,68,89,75,60,72],
-    consumed:    [145,132,178,121,156,143,130],
-    pumpRun:     '14.2h',
-    conLabel:    'Daily Usage (Litres)',
-  },
-  month: {
-    periodLabel: 'This Month',
-    chartLabel:  'Weekly — ',
-    labels:      ['Wk 1','Wk 2','Wk 3','Wk 4'],
-    level:       [70,85,68,72],
-    consumed:    [980,850,1120,920],
-    pumpRun:     '52.6h',
-    conLabel:    'Weekly Usage (Litres)',
-  },
-};
-
 function initAnalytics() {
-  // Set today's date in period label
   const d = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('an-period-date').textContent =
-    d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
-
-  // Set date input max to today
+  const el = document.getElementById('an-period-date');
+  if (el) el.textContent = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
   const di = document.getElementById('an-date-input');
   if (di) di.max = d.toISOString().slice(0,10);
-
   segClick(document.getElementById('seg-today'), 'today');
 }
 
 function segClick(btn, period) {
-  // Highlight active tab
   document.querySelectorAll('.an-seg .seg').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  // Show/hide date picker
+  if (btn) btn.classList.add('active');
   const dp = document.getElementById('an-date-pick');
-  if (period === 'date') {
-    if (dp) dp.style.display = 'flex';
-    // Load data for selected date (use today's data as demo)
-    const di = document.getElementById('an-date-input');
-    const dateVal = di && di.value ? di.value : new Date().toISOString().slice(0,10);
-    const d = new Date(dateVal);
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    document.getElementById('an-period-lbl').innerHTML =
-      days[d.getDay()] + ' — <span id="an-period-date">' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + '</span>';
-    buildAnalyticsCharts('today');
-    return;
-  }
+  if (period === 'date') { if (dp) dp.style.display = 'flex'; loadAndBuildCharts('today'); return; }
   if (dp) dp.style.display = 'none';
-
-  const p = AN_DATA[period];
-  if (!p) return;
-
-  // Period label
   const d = new Date();
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  let dateTxt = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
-  if (period === 'week') {
-    const mon = new Date(d); mon.setDate(d.getDate() - d.getDay() + 1);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    dateTxt = mon.getDate() + ' – ' + sun.getDate() + ' ' + months[d.getMonth()];
-  } else if (period === 'month') {
-    dateTxt = months[d.getMonth()] + ' ' + d.getFullYear();
-  }
-  document.getElementById('an-period-lbl').innerHTML =
-    p.periodLabel + ' — <span id="an-period-date">' + dateTxt + '</span>';
-
-  buildAnalyticsCharts(period);
+  let dateTxt = '';
+  if (period === 'today')       dateTxt = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  else if (period === 'week') { const mon = new Date(d); mon.setDate(d.getDate()-((d.getDay()+6)%7)); const sun = new Date(mon); sun.setDate(mon.getDate()+6); dateTxt = mon.getDate()+' – '+sun.getDate()+' '+months[d.getMonth()]; }
+  else if (period === 'month')  dateTxt = months[d.getMonth()] + ' ' + d.getFullYear();
+  const lbl = document.getElementById('an-period-lbl');
+  if (lbl) lbl.innerHTML = (period==='today'?'Today':period==='week'?'This Week':'This Month') + ' — <span id="an-period-date">' + dateTxt + '</span>';
+  loadAndBuildCharts(period);
 }
 
-function buildAnalyticsCharts(period) {
-  const p = AN_DATA[period] || AN_DATA.today;
+async function loadAndBuildCharts(period) {
+  const range = period === 'week' ? 'week' : period === 'month' ? 'month' : 'today';
+  const elMax=document.getElementById('an-max'), elMin=document.getElementById('an-min');
+  const elCon=document.getElementById('an-consumed'), elPump=document.getElementById('an-pump');
+  [elMax,elMin,elCon,elPump].forEach(e => { if(e) e.textContent='…'; });
 
-  // Stats
-  const maxLvl = Math.max(...p.level);
-  const minLvl = Math.min(...p.level);
-  const totalConsumed = p.consumed.reduce((a,b) => a+b, 0);
+  try {
+    const [logData, statusData] = await Promise.all([apiFetch('/tank/logs?range='+range), apiFetch('/tank/status')]);
+    const logs     = (logData.ok && logData.logs) ? logData.logs : [];
+    const capacity = statusData.ok ? (statusData.tank.capacity || 50) : 50;
 
-  const elMax = document.getElementById('an-max');
-  const elMin = document.getElementById('an-min');
-  const elPump = document.getElementById('an-pump');
-  const elCon  = document.getElementById('an-consumed');
-  const elPeak = document.getElementById('chart-peak');
-  const elConLbl = document.getElementById('con-lbl');
+    if (!logs.length) { buildEmptyCharts(period, capacity); return; }
 
-  if (elMax)  elMax.textContent  = maxLvl + '%';
-  if (elMin)  elMin.textContent  = minLvl + '%';
-  if (elPump) elPump.textContent = p.pumpRun;
-  if (elCon)  elCon.textContent  = totalConsumed + 'L';
-  if (elPeak) elPeak.textContent = maxLvl + '%';
-  if (elConLbl) elConLbl.textContent = p.conLabel;
+    let labels=[], levelData=[], consumedData=[];
 
-  buildMainChart(p);
-  buildConChart(p);
+    if (period === 'today') {
+      const hourMap = {};
+      logs.forEach(log => { const h=new Date(log.logged_at).getHours(); if(!hourMap[h]) hourMap[h]=[]; hourMap[h].push(log); });
+      const nowH = new Date().getHours();
+      let prevPct = null;
+      for (let h=0; h<=nowH; h++) {
+        const bucket = hourMap[h]; if (!bucket) continue;
+        const last = bucket[bucket.length-1];
+        const pct  = Math.round(last.level_pct);
+        const drop = prevPct !== null ? Math.max(0, prevPct - pct) : 0;
+        const used = Math.round((drop/100)*capacity * 10) / 10;
+        labels.push(h===nowH?'Now':(h<12?h+'am':h===12?'12pm':(h-12)+'pm'));
+        levelData.push(pct); consumedData.push(used); prevPct=pct;
+      }
+      if (labels.length===1) { labels.unshift('Start'); levelData.unshift(levelData[0]); consumedData.unshift(0); }
+      const elCL=document.getElementById('con-lbl'); if(elCL) elCL.textContent='Hourly Usage (Litres)';
+
+    } else if (period === 'week') {
+      const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], dayMap={};
+      logs.forEach(log => { const d=new Date(log.logged_at).getDay(); if(!dayMap[d]) dayMap[d]=[]; dayMap[d].push(log); });
+      let prevPct=null;
+      for (let d=0; d<=new Date().getDay(); d++) {
+        const bucket=dayMap[d]; if(!bucket) continue;
+        const avg=Math.round(bucket.reduce((s,l)=>s+l.level_pct,0)/bucket.length);
+        const end=bucket[bucket.length-1].level_pct;
+        const drop=prevPct!==null?Math.max(0,prevPct-end):0;
+        labels.push(dayNames[d]); levelData.push(avg); consumedData.push(Math.round((drop/100)*capacity*10)/10); prevPct=end;
+      }
+      const elCL=document.getElementById('con-lbl'); if(elCL) elCL.textContent='Daily Usage (Litres)';
+
+    } else {
+      const wkMap={};
+      logs.forEach(log => { const wk=Math.floor((new Date(log.logged_at).getDate()-1)/7); if(!wkMap[wk]) wkMap[wk]=[]; wkMap[wk].push(log); });
+      let prevPct=null;
+      Object.keys(wkMap).sort((a,b)=>a-b).forEach(wk => {
+        const bucket=wkMap[wk], avg=Math.round(bucket.reduce((s,l)=>s+l.level_pct,0)/bucket.length);
+        const end=bucket[bucket.length-1].level_pct, drop=prevPct!==null?Math.max(0,prevPct-end):0;
+        labels.push('Week '+(+wk+1)); levelData.push(avg); consumedData.push(Math.round((drop/100)*capacity*10)/10); prevPct=end;
+      });
+      const elCL=document.getElementById('con-lbl'); if(elCL) elCL.textContent='Weekly Usage (Litres)';
+    }
+
+    const maxL=levelData.length?Math.max(...levelData):0, minL=levelData.length?Math.min(...levelData):0;
+    const total=consumedData.reduce((a,b)=>a+b,0).toFixed(1);
+    if(elMax) elMax.textContent=maxL+'%'; if(elMin) elMin.textContent=minL+'%';
+    if(elCon) elCon.textContent=total+'L'; if(elPump) elPump.textContent=logs.length+' readings';
+    const ep=document.getElementById('chart-peak'); if(ep) ep.textContent=maxL+'%';
+    buildMainChart({labels,level:levelData,consumed:consumedData});
+    buildConChart({labels,level:levelData,consumed:consumedData,capacity});
+  } catch(e) { console.warn('Analytics error:',e.message); buildEmptyCharts(period,50); }
+}
+
+function buildEmptyCharts(period,capacity) {
+  const labels=period==='today'?['6am','9am','12pm','3pm','Now']:period==='week'?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Week 1','Week 2','Week 3','Week 4'];
+  const z=labels.map(()=>0);
+  const em=document.getElementById('an-max'),en=document.getElementById('an-min'),ec=document.getElementById('an-consumed'),ep2=document.getElementById('an-pump');
+  if(em) em.textContent='0%'; if(en) en.textContent='0%'; if(ec) ec.textContent='0L'; if(ep2) ep2.textContent='No data yet';
+  buildMainChart({labels,level:z,consumed:z}); buildConChart({labels,level:z,consumed:z,capacity});
 }
 
 function buildMainChart(p) {
-  const ctx = document.getElementById('mainChart');
-  if (!ctx) return;
-  if (S.charts.main) { S.charts.main.destroy(); S.charts.main = null; }
-
-  const g  = ctx.getContext('2d');
-  const gr = g.createLinearGradient(0, 0, 0, 200);
-  gr.addColorStop(0,   'rgba(0,122,255,0.3)');
-  gr.addColorStop(0.6, 'rgba(0,122,255,0.08)');
-  gr.addColorStop(1,   'rgba(0,122,255,0)');
-
-  // Mark pump-on zones (levels increasing)
-  const pointColors = p.level.map((v,i) =>
-    i > 0 && p.level[i] > p.level[i-1] ? '#34C759' : '#007AFF'
-  );
-
-  S.charts.main = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: p.labels,
-      datasets: [{
-        label: 'Water Level',
-        data: p.level,
-        borderColor: '#007AFF',
-        borderWidth: 2.5,
-        fill: true,
-        backgroundColor: gr,
-        tension: 0.4,
-        pointBackgroundColor: pointColors,
-        pointBorderColor: 'white',
-        pointBorderWidth: 2.5,
-        pointRadius: 5,
-        pointHoverRadius: 8,
-        pointHoverBorderWidth: 3,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode:'index', intersect:false },
-      animation: { duration:600, easing:'easeInOutQuart' },
-      plugins: {
-        legend: { display:false },
-        tooltip: {
-          backgroundColor: 'rgba(28,28,30,0.92)',
-          borderColor: 'rgba(0,122,255,0.3)',
-          borderWidth: 1,
-          titleColor: 'rgba(255,255,255,0.55)',
-          bodyColor: '#fff',
-          padding: 14, cornerRadius: 14,
-          callbacks: {
-            label: c => '  💧 Level: ' + c.parsed.y + '%',
-            afterLabel: (c) => {
-              const used = p.consumed[c.dataIndex] || 0;
-              return used > 0 ? '  🚿 Used: ' + used + 'L' : '';
-            },
-          },
-        },
-        annotation: {},
-      },
-      scales: {
-        x: {
-          grid: { color:'rgba(0,0,0,0.05)', drawBorder:false },
-          ticks: { color:'#8e8e93', font:{ size:10, family:'Inter' }, maxRotation:0 },
-          border: { display:false },
-        },
-        y: {
-          min: 0, max: 100,
-          grid: { color:'rgba(0,0,0,0.06)', drawBorder:false },
-          ticks: { color:'#8e8e93', font:{ size:10, family:'Inter' }, stepSize:20, callback: v => v+'%' },
-          border: { display:false },
-        },
-      },
-    },
-  });
+  const ctx=document.getElementById('mainChart'); if(!ctx) return;
+  if(S.charts.main){S.charts.main.destroy();S.charts.main=null;}
+  const g=ctx.getContext('2d'), gr=g.createLinearGradient(0,0,0,200);
+  gr.addColorStop(0,'rgba(0,122,255,0.3)'); gr.addColorStop(0.6,'rgba(0,122,255,0.08)'); gr.addColorStop(1,'rgba(0,122,255,0)');
+  const ptColors=p.level.map((v,i)=>i>0&&p.level[i]>p.level[i-1]?'#34C759':'#007AFF');
+  S.charts.main=new Chart(ctx,{type:'line',data:{labels:p.labels,datasets:[{label:'Tank Level %',data:p.level,borderColor:'#007AFF',borderWidth:2.5,fill:true,backgroundColor:gr,tension:0.4,pointBackgroundColor:ptColors,pointBorderColor:'white',pointBorderWidth:2.5,pointRadius:5,pointHoverRadius:8}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},animation:{duration:600,easing:'easeInOutQuart'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(28,28,30,0.92)',borderColor:'rgba(0,122,255,0.3)',borderWidth:1,titleColor:'rgba(255,255,255,0.55)',bodyColor:'#fff',padding:14,cornerRadius:14,callbacks:{label:c=>'  💧 Level: '+c.parsed.y+'%',afterLabel:c=>{const u=p.consumed[c.dataIndex]||0;return u>0?'  🚿 Used: '+u+'L':'';},},}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)',drawBorder:false},ticks:{color:'#8e8e93',font:{size:10,family:'Inter'},maxRotation:0},border:{display:false}},y:{min:0,max:100,grid:{color:'rgba(0,0,0,0.06)',drawBorder:false},ticks:{color:'#8e8e93',font:{size:10,family:'Inter'},stepSize:20,callback:v=>v+'%'},border:{display:false}}}}});
 }
 
 function buildConChart(p) {
-  const ctx = document.getElementById('conChart');
-  if (!ctx) return;
-  if (S.charts.con) { S.charts.con.destroy(); S.charts.con = null; }
-
-  const colors = p.consumed.map(v =>
-    v > 150 ? 'rgba(255,59,48,0.75)' :
-    v > 100 ? 'rgba(255,149,0,0.75)' :
-              'rgba(88,86,214,0.7)'
-  );
-
-  S.charts.con = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: p.labels,
-      datasets: [{
-        label: 'Water Used',
-        data: p.consumed,
-        backgroundColor: colors,
-        borderColor: colors.map(c => c.replace('0.7','1').replace('0.75','1')),
-        borderWidth: 1,
-        borderRadius: 10,
-        borderSkipped: false,
-        hoverBackgroundColor: colors.map(c => c.replace('0.7','0.9').replace('0.75','0.9')),
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration:600, easing:'easeInOutQuart' },
-      plugins: {
-        legend: { display:false },
-        tooltip: {
-          backgroundColor: 'rgba(28,28,30,0.92)',
-          borderColor: 'rgba(88,86,214,0.3)',
-          borderWidth: 1,
-          titleColor: 'rgba(255,255,255,0.55)',
-          bodyColor: '#fff',
-          padding: 14, cornerRadius: 14,
-          callbacks: {
-            label: c => '  🚿 Consumed: ' + c.parsed.y + 'L',
-          },
-        },
-      },
-      scales: {
-        x: {
-          grid: { display:false },
-          ticks: { color:'#8e8e93', font:{ size:10, family:'Inter' }, maxRotation:0 },
-          border: { display:false },
-        },
-        y: {
-          grid: { color:'rgba(0,0,0,0.06)', drawBorder:false },
-          ticks: { color:'#8e8e93', font:{ size:10, family:'Inter' }, callback: v => v+'L' },
-          border: { display:false },
-        },
-      },
-    },
-  });
+  const ctx=document.getElementById('conChart'); if(!ctx) return;
+  if(S.charts.con){S.charts.con.destroy();S.charts.con=null;}
+  const cap=p.capacity||50, hi=cap*0.15, mi=cap*0.08;
+  const colors=p.consumed.map(v=>v>hi?'rgba(255,59,48,0.75)':v>mi?'rgba(255,149,0,0.75)':'rgba(88,86,214,0.7)');
+  S.charts.con=new Chart(ctx,{type:'bar',data:{labels:p.labels,datasets:[{label:'Water Used (L)',data:p.consumed,backgroundColor:colors,borderColor:colors.map(c=>c.replace('0.7','1').replace('0.75','1')),borderWidth:1,borderRadius:10,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:600,easing:'easeInOutQuart'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(28,28,30,0.92)',borderColor:'rgba(88,86,214,0.3)',borderWidth:1,titleColor:'rgba(255,255,255,0.55)',bodyColor:'#fff',padding:14,cornerRadius:14,callbacks:{label:c=>'  🚿 Used: '+c.parsed.y+'L'}}},scales:{x:{grid:{display:false},ticks:{color:'#8e8e93',font:{size:10,family:'Inter'},maxRotation:0},border:{display:false}},y:{min:0,grid:{color:'rgba(0,0,0,0.06)',drawBorder:false},ticks:{color:'#8e8e93',font:{size:10,family:'Inter'},callback:v=>v+'L'},border:{display:false}}}}});
 }
 
-/* ── Today's Water Level — bar tap detail ───────────────── */
-function showBarDetail(col, time, level, used) {
-  // Highlight tapped bar
-  document.querySelectorAll('#twc-bars .twc-bar-col').forEach(c => c.classList.remove('twc-bar-active'));
-  col.classList.add('twc-bar-active');
-
-  const tt    = document.getElementById('twc-tooltip');
-  const tTime = document.getElementById('twct-time');
-  const tVal  = document.getElementById('twct-val');
-  const tUsed = document.getElementById('twct-used');
-
-  if (!tt) return;
-  if (tTime) tTime.textContent = time;
-  if (tVal)  tVal.textContent  = level;
-  if (tUsed) tUsed.textContent = used;
-  tt.style.display = 'flex';
-}
-
-/* old segClick alias */
-function buildMain(period) { buildAnalyticsCharts(period); }
+function buildMain(period) { loadAndBuildCharts(period); }
+function buildAnalyticsCharts(period) { loadAndBuildCharts(period); }
 
 
 /* ── Notifications ──────────────────────────────────────── */
